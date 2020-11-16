@@ -243,3 +243,108 @@ listcol_df =
 ## so the process here, in a few lines of code, is to say i hae a df, created a mean_and_sd summary, and median for these elements... you don't have a bunch of vectors flaoting around and everythign is in a dataframe.
 ```
 
+
+Now let's look at a more concrete example that is less contrived
+
+## Weather data
+
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USC00519397", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(
+      id, 
+      USW00094728 = "CentralPark_NY", 
+      USC00519397 = "Waikiki_HA",
+      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+Get our list columns ..
+
+```{r}
+weather_nest =
+  weather_df %>% 
+  nest(data = date:tmin)
+```
+
+```{r}
+weather_nest %>% pull(name)
+weather_nest %>% pull(data)
+
+weather_nest$data[[1]]
+# just the tibble for central park
+weather_nest$data[[2]]
+# just the tibble for waikiki
+weather_nest$data[[3]]
+# # just the tibble for water hole
+```
+
+Suppose I want to regress `tmax` on `tmin` for each station.
+
+This works ...
+
+```{r}
+lm(tmax ~ tmin, data = weather_nest$data[[1]])
+
+```
+
+Let's write s funtion. to do this regression
+
+```{r}
+weather_lm = function(df) {
+  
+  lm(tmax ~ tmin, data = df)
+  
+}
+
+weather_lm(weather_nest$data[[1]])
+weather_lm(weather_nest$data[[1]])
+weather_lm(weather_nest$data[[1]])
+weather_lm(weather_nest$data[[1]])
+
+##can do a for loop
+
+output = vector("list", 3)
+
+for (i in 1:3) {
+  
+  output[[i]] = weather_lm(weather_nest$data[[i]])
+
+  }
+
+
+```
+
+What about a map ...!?
+
+```{r}
+weather_nest$data
+
+map(weather_nest$data, weather_lm)
+```
+
+What about a map in a list column !!!!!??
+
+```{r}
+weather_nest =
+  weather_nest %>% 
+    mutate(
+      models = map(data, weather_lm)
+    )
+
+weather_nest$models
+```
+
+Summary: talked about lists, assumed we know how lists work, used lists as list columns, for loops, map statements, and given list columns, we've used map function to create more list columns
+
+This is foundaational tools to run simulation, etc. bootstrapping etc.  Big shift
+
+Group by and Summarize - can only get you so far, but can't summarize with regression - this allows you to do it.
+
