@@ -147,3 +147,99 @@ output = map(list_norm, IQR)
 ## this is a function within a function, whatever you want
 ```
 
+```{r}
+output = map(list_norm, median)
+
+output = map_dbl(list_norm, median)
+## this creates a different kind of fancier list - it is giving e a vector
+```
+
+```{r}
+output = map_df(list_norm, mean_and_sd)
+## what this does is instead of having multiple lists (4 lists), it creates a dataframe and binds them 
+output = map_df(list_norm, mean_and_sd, .id = "input")
+## here, .id = "input" tells it to keep track of from which list the mean and sd are coming from
+```
+
+Up to this point, for loops, map statements, we got lists.
+Key idea is keeping track of everything so in your environment, you've got a lot of stuff.
+What you want to have is something that keeps tracks of inputs and outputs at the same time.
+
+## List columns!
+
+```{r}
+listcol_df =
+  tibble(
+    name = c("a", "b", "c", "d"),
+    samp = list_norm
+  )
+## this is a dataframe - printed tibble shows you the name and the lists and their elements
+```
+
+```{r}
+listcol_df %>% pull(name)
+listcol_df %>% pull(samp)
+## so the listcol_df still has all the elements that should be there, it is just a more compact way of looking at things
+## it's a dataframe, so you can still do whatever you want to a dataframe
+
+listcol_df %>%
+  filter(name == "a")
+
+
+```
+
+Let's try some operations.
+
+```{r}
+listcol_df$samp
+## dollar sign is the same thing as pulling out that list - a little easier in this example
+
+listcol_df$samp[[1]]
+
+mean_and_sd(listcol_df$samp[[1]])
+## so we are applying mean_and_sd function to the df and only the first element in that dataframe
+
+mean_and_sd(listcol_df$samp[[2]])
+mean_and_sd(listcol_df$samp[[3]])
+mean_and_sd(listcol_df$samp[[4]])
+```
+
+Can I just map??
+
+```{r}
+map(listcol_df$samp, mean_and_sd)
+
+```
+
+So... can I add a list column??
+YES
+Mutate issue!
+```{r}
+listcol_df %>% 
+  mutate(summary = map(samp, mean_and_sd))
+
+listcol_df =
+  listcol_df %>% 
+  mutate(summary = map(samp, mean_and_sd))
+
+listcol_df =
+  listcol_df %>% 
+  mutate(summary = map_df(samp, mean_and_sd))
+
+listcol_df =
+  listcol_df %>% 
+  mutate(
+    summary = map(samp, mean_and_sd),
+    medians = map(samp, median)
+  )
+
+listcol_df =
+  listcol_df %>% 
+  mutate(
+    summary = map(samp, mean_and_sd),
+    medians = map_dbl(samp, median)
+  )
+
+## so the process here, in a few lines of code, is to say i hae a df, created a mean_and_sd summary, and median for these elements... you don't have a bunch of vectors flaoting around and everythign is in a dataframe.
+```
+
