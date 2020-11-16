@@ -128,3 +128,22 @@ for (i in 1:4) {
 }
 ```
 
+
+## Let's try map!
+Instead of saying input list and output list and then do the procedure, the idea behind map is ...
+
+
+```{r}
+output = map(list_norm, mean_and_sd)
+## doing same thing and even saving the list now
+```
+
+what if you want a different function..?
+
+```{r}
+output = map(list_norm, median)
+output = map(list_norm, IQR)
+## you can map any function you want across this input list
+## this is a function within a function, whatever you want
+```
+
